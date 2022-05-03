@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "ordering-system"
+name = "gtf-ordering-api"
 version = "0.1.0"
 description = ""
 authors = ["Semicolon1647 <Semicolon1647@proton.me>"]
-license = "AGPL-3"
+license = "AGPL-3.0"
 
 [tool.poetry.dependencies]
 python = "^3.10"
