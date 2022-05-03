@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "gtf-ordering-api"
+name = "gtf_order_api"
 version = "0.1.0"
 description = ""
 authors = ["Semicolon1647 <Semicolon1647@proton.me>"]

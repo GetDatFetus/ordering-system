@@ -16,13 +16,13 @@
             ];
         };
 
-        defaultPackage = with pkgs.poetry2nix; mkPoetryApplication {
+        packages.gtf_order_api= with pkgs.poetry2nix; mkPoetryApplication {
             projectDir = ./ordering-system;
             preferWheels = true;
         };
 
-        defaultApp = utils.lib.mkApp {
-            drv = self.defaultPackage."${system}";
+        apps.gtf_order_api = utils.lib.mkApp {
+            drv = self.packages.gtf_order_api."${system}";
         };
 
     }; in with utils.lib; eachSystem defaultSystems out;
