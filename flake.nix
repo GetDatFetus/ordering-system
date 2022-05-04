@@ -17,13 +17,25 @@
             ];
         };
 
-        packages.gtf_order_api= with pkgs.poetry2nix; mkPoetryApplication {
-            projectDir = ./ordering-system;
-            preferWheels = true;
+        packages = {
+            ordering-api = pkgs.poetry2nix.mkPoetryApplication {
+                projectDir = ./ordering-api;
+                preferWheels = true;
+            };
+            create-address-service = pkgs.poetry2nix.mkPoetryApplication {
+                projectDir = ./create-address-service;
+                preferWheels = true;
+            };
         };
 
-        apps.gtf_order_api = utils.lib.mkApp {
-            drv = self.packages.gtf_order_api."${system}";
+        apps = {
+            ordering-api = utils.lib.mkApp {
+                drv = self.packages.ordering-api."${system}";
+            };
+            create-address-service = pkgs.poetry2nix.mkPoetryApplication {
+                projectDir = ./create-address-service;
+                preferWheels = true;
+            };
         };
 
     }; in with utils.lib; eachSystem defaultSystems out;

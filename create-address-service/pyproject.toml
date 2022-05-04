@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "create-address-service"
+version = "0.1.0"
+description = ""
+authors = ["Semicolon1647 <Semicolon1647@proton.me>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Flask = "^2.1.2"
+monero = "^1.0.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
