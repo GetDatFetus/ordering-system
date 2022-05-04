@@ -49,7 +49,7 @@ class XMRExchangeRateSerializer(ModelSerializer):
     class Meta:
         model = XMRExchangeRate
         fields = [
-            'xmr_per_usd_rate',
+            'rate',
             'date_updated',
         ]
 
