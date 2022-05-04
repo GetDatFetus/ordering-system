@@ -5,15 +5,20 @@ from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.db.models import Model
-from django.db.models.deletion import CASCADE
-from django.db.models.fields import BooleanField, CharField, DateField, DateTimeField, DecimalField, EmailField, FloatField, IntegerField, TextField, URLField
+from django.db.models.deletion import CASCADE, PROTECT
+from django.db.models.fields import BinaryField, BooleanField, CharField, DateField, DateTimeField, DecimalField, EmailField, IntegerField, TextField, URLField
 from django.db.models.fields.related import ForeignKey
 from django.db.models.query import QuerySet
 
 
 class XMRExchangeRate(Model):
+    """
+    The exchange rate at a snapshot of time. This can be updated with the
+    update_exchange_rate command.
+    """
+
     date_updated = DateTimeField(auto_now_add=True, null=False)
-    rate = FloatField(null=False)
+    rate = DecimalField(max_digits=10, decimal_places=10, null=False)
     """Exchange rate, in XMR per USD."""
 
     def __str__(self):
@@ -28,7 +33,7 @@ class XMRExchangeRate(Model):
 
 
 class Supplier(Model):
-    title = CharField(max_length=100, null=False)
+    title = CharField(max_length=100, null=False, unique=True)
     url = URLField(max_length=256, null=False)
 
     def __str__(self):
@@ -36,19 +41,30 @@ class Supplier(Model):
 
 
 class StoreItem(Model):
-    title = CharField(max_length=100, null=False)
+    title = CharField(max_length=100, null=False, unique=True)
     description = TextField()
 
-    date_added = DateField(auto_now_add=True)
-    visible = BooleanField(default=True, null=False)
-    active = BooleanField(default=True, null=False)
+    image = URLField(max_length=128, null=True)
 
-    supplier = ForeignKey(Supplier, on_delete=CASCADE)
+    date_added = DateField(auto_now_add=True)
+    visible = BooleanField(default=False, null=False)
+    active = BooleanField(default=False, null=False)
+
+    supplier = ForeignKey(Supplier, on_delete=PROTECT)
     supplier_url = URLField(max_length=256)
     price_usd = DecimalField(max_digits=10, decimal_places=2, null=False)
 
     def __str__(self):
         return f'StoreItem: {self.title} by {self.supplier}'
+
+
+class EncryptKeys(Model):
+    """
+    PGP keys that the frontend can use to encrypt sensitive fields.
+    """
+    date_created = DateTimeField(auto_now_add=True, null=False)
+    active = BooleanField(default=False, null=False)
+    key = BinaryField(max_length=8192, null=False)
 
 
 class Order(Model):
@@ -64,7 +80,15 @@ class Order(Model):
         LOST = 40
 
     email = EmailField(max_length=64, null=False)
-    mailing_address = TextField(max_length=256, null=True)
+    encrypt_key = ForeignKey(EncryptKeys, on_delete=PROTECT, null=False)
+    mailing_address = BinaryField(max_length=300, null=True)
+    """
+    The mailing address to send the order to, encrypted using one of the keys.
+
+    This public-facing server does not handle plaintext mailing addresses
+    because if it got compromised, they would be leaked. Plaintext mailing
+    addresses must be handled elsewhere.
+    """
 
     state = IntegerField(default=State.CREATED, null=False)
 
@@ -73,23 +97,34 @@ class Order(Model):
     date_purchased = DateTimeField()
     date_arrived = DateTimeField()
 
-    xmr_address = CharField(max_length=105, null=False, unique=True)
-    """Every order pays to a different address to identify transactions."""
+    xmr_address = CharField(max_length=105, null=True, unique=True)
+    """
+    The address that we will expect money on for this order.
 
-    xmr_txn_hash = CharField(max_length=105, null=True)
-    """Every order pays to a different address to identify transactions."""
+    Every order pays to a different address to identify and mask transactions.
+    Since users may be ordering from custodial exchanges, it will be cleared as
+    soon as payment is received for privacy purposes.
+    """
 
-    xmr_per_usd_rate = FloatField(null=False)
-    """XMR exchange rate may change between orders."""
+    xmr_per_usd_rate = DecimalField(
+        max_digits=10,
+        decimal_places=10,
+        null=False
+    )
+    """
+    XMR exchange rate may change between orders. This freezes it for this order.
+    """
 
     processing_fees = DecimalField(max_digits=10, decimal_places=2, null=False)
+    """Additional fees applied to this order in USD."""
 
-    items: QuerySet['OrderedItem']
+    items: QuerySet['OrderedItem']  # related field
 
     def mark_paid(self, txn_hash: str, date: datetime) -> None:
         self.state = Order.State.PAID
         self.xmr_txn_hash = txn_hash
         self.date_paid = date
+        self.xmr_address = None
 
     def mark_purchased(self, date: datetime) -> None:
         self.state = Order.State.PURCHASED
@@ -119,6 +154,11 @@ class Order(Model):
                 "Orders that have been purchased must have mailing address cleared"
             )
 
+        if st != Order.State.CREATED and self.xmr_address is not None:
+            raise ValidationError(
+                "Orders that have been paid for must have XMR address cleared"
+            )
+
         if st < Order.State.PAID:
             self.date_paid = None
             self.xmr_txn_hash = None
@@ -145,12 +185,15 @@ class Order(Model):
 
 
 class OrderedItem(Model):
-    item = ForeignKey(StoreItem, on_delete=CASCADE)
+    item = ForeignKey(StoreItem, on_delete=PROTECT)
     order = ForeignKey(Order, on_delete=CASCADE)
     quantity = IntegerField()
     unit_price_usd = DecimalField(max_digits=10, decimal_places=2, null=False)
     """In case supplier prices change between orders."""
 
     def __str__(self):
-        return f'OrderedItem: {self.item} x {self.quantity} @ {self.unit_price_usd} of #{self.order.id}'
+        return (
+            f'OrderedItem: ${self.unit_price_usd} {self.item} x {self.quantity}'
+            f' of #{self.order.id}'
+        )
 
