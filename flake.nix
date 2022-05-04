@@ -11,8 +11,8 @@
 
         devShell = pkgs.mkShell {
             buildInputs = with pkgs; [
-                python3Packages.poetry
-                python3Packages.django
+                python310Packages.poetry
+                python310Packages.django
             ];
         };
 

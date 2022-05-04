@@ -16,6 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from orders.views import get_store_info, place_order
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/info', get_store_info),
+    path('api/place_order', place_order)
 ]
+
