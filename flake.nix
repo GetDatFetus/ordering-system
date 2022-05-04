@@ -11,6 +11,7 @@
 
         devShell = pkgs.mkShell {
             buildInputs = with pkgs; [
+                monero-cli
                 python310Packages.poetry
                 python310Packages.django
             ];

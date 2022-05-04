@@ -27,7 +27,7 @@ class OrderSerializer(ModelSerializer):
         read_only_fields = [
             'xmr_per_usd_rate',
             'processing_fees',
-            'order_tag',
+            'address',
             'date_placed'
         ]
 
