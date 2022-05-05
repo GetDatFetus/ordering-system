@@ -1,14 +1,12 @@
 # Create Address Service
 
-This stateless service is a wrapper around the Monero Wallet RPC to aid in
-isolation and wallet securely.
+This stateless service, hidden from public endpoints, is a wrapper around the
+Monero Wallet RPC to restrict the Ordering API's control over the actual wallet.
 
-It ensures that the Ordering API has the following capabilities and ONLY the
-following capabilities:
+The Ordering API will have the following capabilities and ONLY the following
+capabilities:
 
 - Create new subaddresses
 - See how much money a subaddress received
 - See what transaction hashes are associated with a subaddress
-
-Its endpoints are NOT exposed to the public.
 

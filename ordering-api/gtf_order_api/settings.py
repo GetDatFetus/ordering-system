@@ -128,9 +128,3 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MONERO_RPC_HOST = 'localhost'
-MONERO_RPC_PORT = 48081
-MONERO_RPC_MAX_HEIGHT = 1_000_000
-MONERO_RPC_USERNAME = 'monero'
-MONERO_RPC_PASSWORD = 'password'
-
