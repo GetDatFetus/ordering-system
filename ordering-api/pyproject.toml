@@ -10,7 +10,7 @@ python = "^3.10"
 Django = "^4.0.4"
 djangorestframework = "^3.13.1"
 requests = "^2.27.1"
-monero = "^1.0.2"
+structlog = "^21.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
