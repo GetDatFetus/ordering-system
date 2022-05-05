@@ -1,9 +1,9 @@
 from flask import Flask, abort
-import logging
+import structlog
 from monero.wallet import Wallet
 
 
-_logger = logging.getLogger(__name__)
+_log = structlog.get_logger(__name__)
 
 app = Flask(__name__)
 
@@ -20,15 +20,16 @@ MONERO_TXN_MAX_HEIGHT = app.config['MONERO_TXN_MAX_HEIGHT']
 @app.route("/api/addresses", methods = ['POST'])
 def create_address():
     wallet = get_wallet()
-    _logger.info("Creating subaddress...")
+    _log.info("Creating subaddress")
     address, _ = wallet.new_address()
-    _logger.info("Created subaddress=%s", address)
+    _log.info("Created subaddress", address=address)
     return str(address)
 
 
 @app.route("/api/addresses/<address>", methods = ['GET'])
 def get_address_info(address: str):
-    _logger.info("Fetching transactions going to address=%s", address)
+    log = _log.bind(address=address)
+    log.info("Fetching incoming transactions")
     
     wallet = get_wallet()
 
@@ -39,10 +40,7 @@ def get_address_info(address: str):
             confirmed=True,
         )
     except ValueError:
-        _logger.warn(
-            "Address does not exist: address=%s",
-            address
-        )
+        log.warn("Address does not exist")
         return abort(404)
 
     total_received = sum((p.amount for p in incoming_payments))
@@ -54,13 +52,12 @@ def get_address_info(address: str):
         else None
     )
 
-    _logger.info(
-        "Got transaction info: n_payments=%s xmr=%s hash=%s",
-        total_received,
-        len(incoming_payments),
-        txn_hash,
+    _log.info(
+        "Received transaction info",
+        n_payments=len(incoming_payments),
+        xmr_received=total_received,
+        txn_hash=txn_hash,
     )
-
     return {
         'transaction': txn_hash,
         'total_xmr': total_received,

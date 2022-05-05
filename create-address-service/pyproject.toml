@@ -8,6 +8,7 @@ authors = ["Semicolon1647 <Semicolon1647@proton.me>"]
 python = "^3.10"
 Flask = "^2.1.2"
 monero = "^1.0.2"
+structlog = "^21.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
